@@ -1,0 +1,20 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python files
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local project output
+KMS/logs/
+bidi_model_name.txt
+models_bidi.txt
+models_list.txt
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
