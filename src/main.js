@@ -220,7 +220,16 @@ $('#connection-form').addEventListener('submit', async (event) => {
   $('#connection-error').textContent = '';
   recognition?.abort();
   window.speechSynthesis?.cancel();
-  if (room) await room.disconnect();
+  if (room) {
+    try {
+      await room.disconnect();
+    } catch {
+      connecting = false;
+      $('#connect-button').disabled = false;
+      $('#connection-error').textContent = 'Could not disconnect the current session. Try again.';
+      return;
+    }
+  }
   const nextRoom = new Room({ adaptiveStream:true, dynacast:true });
   room = nextRoom;
   nextRoom.on(RoomEvent.TrackSubscribed, (track) => {
@@ -275,9 +284,29 @@ $('#connection-form').addEventListener('submit', async (event) => {
     addEvent('Room connected', 'Microphone is active. Waiting for your agent.');
     addMessage('J.A.R.V.I.S.', 'Room connected. Your microphone is live. Start speaking, or send a text command to your agent.');
   } catch {
-    await nextRoom.disconnect();
-    if (room === nextRoom) { room = null; clearAudio(); updateConnection(false); }
-    $('#connection-error').textContent = 'Could not start the session. Check the URL, token, room permissions, and microphone access.';
+    let disconnected = false;
+    try {
+      await nextRoom.disconnect();
+      disconnected = true;
+    } catch {
+      // Retain the room so its microphone and disconnect controls stay usable.
+    }
+    if (disconnected && room === nextRoom) {
+      room = null;
+      clearAudio();
+      updateConnection(false);
+    } else if (room === nextRoom && nextRoom.state === ConnectionState.Connected) {
+      updateConnection(true);
+      const microphoneEnabled = nextRoom.localParticipant.isMicrophoneEnabled;
+      $('#mic-button').classList.toggle('listening', microphoneEnabled);
+      $('#mic-button').innerHTML = `<i data-lucide="${microphoneEnabled ? 'mic' : 'mic-off'}"></i>`;
+      $('#mic-button').setAttribute('aria-label', microphoneEnabled ? 'Mute microphone' : 'Enable microphone');
+      setCore(microphoneEnabled ? 'listening' : 'standby');
+      icons();
+    }
+    $('#connection-error').textContent = disconnected
+      ? 'Could not start the session. Check the URL, token, room permissions, and microphone access.'
+      : 'Session setup failed and the room could not disconnect. Use Disconnect to retry leaving the room.';
   } finally {
     connecting = false;
     $('#connect-button').disabled = false;
@@ -285,7 +314,15 @@ $('#connection-form').addEventListener('submit', async (event) => {
 });
 $('#disconnect-button').addEventListener('click', async () => {
   if (connecting) return;
-  if (room) { await room.disconnect(); toast('Disconnected from LiveKit.'); }
+  if (room) {
+    try {
+      await room.disconnect();
+      toast('Disconnected from LiveKit.');
+    } catch {
+      $('#connection-error').textContent = 'Could not disconnect the current session. Try again.';
+      toast('Could not disconnect. Your session is still available; try again.');
+    }
+  }
   else toast('You’re already in local preview.');
 });
 $('#mic-button').addEventListener('click', async () => {
