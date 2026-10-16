@@ -152,3 +152,33 @@ Do not commit `.env`, `*.secret`, or API keys to a public repository. If a key h
 ## License
 
 See [LICENSE](LICENSE) for license information.
+
+## Web command deck
+
+The responsive frontend includes an animated reactor, a conversation console, session history, quick commands, optional spoken responses, and LiveKit audio controls. It respects your system's reduced motion preference.
+
+### Start the frontend
+
+With Node.js 20.19+ (or 22.12+) and npm installed, run from the repository root:
+
+```sh
+npm install
+npm run dev
+```
+
+Open the URL printed by Vite (normally `http://localhost:5173`). For a production build, run `npm run build`; `npm run preview` serves that build locally. Serve the frontend over HTTPS outside localhost to use microphone features.
+
+### Preview mode
+
+The interface works without provider credentials. Preview commands support the time/date, interface status, capabilities, and Google search links. Telemetry values are illustrative, not measurements of the host. Browser voice input uses the browser's speech recognition service when available; use typed commands if unsupported. The speaker button enables browser speech synthesis for preview replies. Session history is held in memory and clears on reload.
+
+### Connect the Python agent
+
+1. Configure the Python environment as described above and start `python agent.py dev` on the machine where its tools should run.
+2. Obtain a **participant access token** for a LiveKit room from your trusted server or LiveKit tools. Enable room joining, microphone publishing, track subscription, and data publishing. Dispatch the Python agent to that same room using LiveKit's tools or your deployment's dispatch configuration.
+3. Click **Connect agent** in the frontend. Enter the LiveKit `wss://` URL and the participant token. Allow microphone access.
+4. Speak to the agent, or send a typed command. Typed messages use LiveKit's `lk.chat` text topic. Final transcription events and incoming `lk.chat` streams appear in the console when provided by the agent.
+
+The connection indicator confirms room connectivity; agent availability depends on dispatch and the Python worker. Use the microphone button to mute input, the speaker button to mute responses, and **Disconnect** in settings to leave the room. Room tokens remain in memory and are cleared from the input after connection. Never put Google API keys, LiveKit API keys, or API secrets in the frontend. A production deployment should issue short-lived participant tokens from an authenticated server; this frontend does not provide a token server.
+
+The Python tools open Chrome on the agent's Windows host. They do not control the device running the web interface. Realtime conversations require your configured LiveKit and Gemini services; preview mode does not emulate them.

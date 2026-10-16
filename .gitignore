@@ -18,3 +18,7 @@ models_list.txt
 .idea/
 .vscode/
 .DS_Store
+
+# Frontend
+node_modules/
+dist/
